@@ -234,7 +234,7 @@ ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 2. **Run the Backend**
    ```bash
    cd agent
-   uvicorn main:app --host 0.0.0.0 --port 8000
+   uvicorn main:app 
    ```
 
 ## API Endpoints
@@ -329,23 +329,6 @@ cd agent
 pytest
 # or
 python -m pytest tests/
-```
-
-## Deployment
-
-### Frontend (Vercel)
-
-```bash
-npm run build
-# Deploy to Vercel or your preferred platform
-```
-
-### Backend (Docker)
-
-```bash
-cd agent
-docker build -t skillsync-agent .
-docker run -p 8000:8000 skillsync-agent
 ```
 
 ## Troubleshooting
