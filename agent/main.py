@@ -12,10 +12,17 @@ from pydantic import BaseModel
 from typing import List
 import uvicorn
 import json
+import requests
+from convex import ConvexClient
 
 load_dotenv()
 
+
+#Api setup 
 app = FastAPI()
+CONVEX_URL = os.getenv("NEXT_PUBLIC_CONVEX_URL")
+client = ConvexClient(CONVEX_URL)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,6 +44,31 @@ class ChatResponse(BaseModel):
 
 class RecommendationsResponse(BaseModel):
     recommendations: list
+
+def fetch_all_gigs():
+    try:
+        response = client.query("gigs:getAllGigsForAgent")
+        output=[]
+        for gig in response:
+            try:
+                description = json.loads(gig["gigDescription"])
+                gig_desc=description[0]["content"][0]["text"]
+            except Exception as e:
+                gig_desc=""
+            temp={
+                "gigId": gig["gigId"],
+                "gigTitle": gig["gigTitle"],
+                "username": gig["username"],
+                "gigDescription": gig_desc,
+                "subcategory": gig["subcategory"],
+                "reviews": gig["reviews"],
+                "offers": gig["offers"]
+            }
+            output.append(temp)
+            return output
+    except Exception as e:
+        print(f"Error fetching gigs: {e}")
+        return []
 
 def generate(messages: List[dict]):
     client = genai.Client(
@@ -190,7 +222,21 @@ Your response **must strictly follow** this JSON structure:
 
 @app.post("/chat", response_model=RecommendationsResponse)
 async def chat_endpoint(request: ChatRequest):
-    reply = generate([msg.model_dump() for msg in request.messages])
+    gigs = fetch_all_gigs()
+    # Compose the user prompt: first message is the job description, second is the gigs data
+    user_messages = [msg.model_dump() for msg in request.messages]
+    # Insert the gigs as a user message (or append to the last user message)
+    if user_messages:
+        user_messages.append({
+            "role": "user",
+            "text": f"SELLER_PROFILES_JSON:\n{json.dumps(gigs)}"
+        })
+    else:
+        user_messages = [{
+            "role": "user",
+            "text": f"SELLER_PROFILES_JSON:\n{json.dumps(gigs)}"
+        }]
+    reply = generate(user_messages)
     try:
         data = json.loads(reply)
         recommendations = data.get("recommendations", [])
@@ -200,3 +246,6 @@ async def chat_endpoint(request: ChatRequest):
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    
+    
+    

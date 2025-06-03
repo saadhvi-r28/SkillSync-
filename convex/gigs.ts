@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
 export const get = query({
     args: {
@@ -258,5 +259,77 @@ export const getGigsWithOrderAmountAndRevenue = query({
 
 
         return gigsFull
+    },
+});
+
+export const getAllGigsForAgent = query({
+    handler: async (ctx) => {
+        // Get all published gigs
+        const gigs = await ctx.db
+            .query("gigs")
+            .withIndex("by_published", (q) => q.eq("published", true))
+            .collect();
+
+        // Preload all subcategories
+        const subcategories = await ctx.db.query("subcategories").collect();
+        const subcategoryMap = Object.fromEntries(
+            subcategories.map((s) => [s._id, s.name])
+        );
+
+        // Preload all users
+        const users = await ctx.db.query("users").collect();
+        const userMap = Object.fromEntries(
+            users.map((u) => [u._id, u.username])
+        );
+
+        // For each gig, fetch reviews and offers
+        const result = await Promise.all(
+            gigs.map(async (gig) => {
+                // Username
+                const username = userMap[gig.sellerId] || "";
+                // Subcategory name
+                const subcategory = subcategoryMap[gig.subcategoryId] || "";
+
+                // Reviews: get all for this gig
+                const reviews = await ctx.db
+                    .query("reviews")
+                    .withIndex("by_gigId", (q) => q.eq("gigId", gig._id))
+                    .collect();
+                let avg_service = 0, avg_comm = 0, avg_recommend = 0;
+                if (reviews.length > 0) {
+                    avg_service = reviews.reduce((a, r) => a + r.service_as_described, 0) / reviews.length;
+                    avg_comm = reviews.reduce((a, r) => a + r.communication_level, 0) / reviews.length;
+                    avg_recommend = reviews.reduce((a, r) => a + r.recommend_to_a_friend, 0) / reviews.length;
+                }
+
+                // Offers: get all for this gig
+                const offersArr = await ctx.db
+                    .query("offers")
+                    .withIndex("by_gigId", (q) => q.eq("gigId", gig._id))
+                    .collect();
+                const offers: Record<string, { price: number; delivery_days: number }> = {};
+                for (const offer of offersArr) {
+                    offers[offer.tier] = {
+                        price: offer.price,
+                        delivery_days: offer.delivery_days,
+                    };
+                }
+
+                return {
+                    username,
+                    gigId: gig._id,
+                    gigTitle: gig.title,
+                    gigDescription: gig.description,
+                    subcategory,
+                    reviews: {
+                        service_as_described: avg_service,
+                        communication_level: avg_comm,
+                        recommend_to_a_friend: avg_recommend,
+                    },
+                    offers,
+                };
+            })
+        );
+        return result;
     },
 });
