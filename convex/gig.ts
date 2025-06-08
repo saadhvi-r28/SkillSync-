@@ -71,7 +71,7 @@ export const get = query({
 
         const sellerWithCountryAndLanguages = {
             ...seller,
-            country: country,
+            /*country: country,*/
             languages: languages,
         };
 

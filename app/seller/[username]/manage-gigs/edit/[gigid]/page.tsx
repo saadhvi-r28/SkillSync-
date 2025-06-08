@@ -38,7 +38,7 @@ const Edit = ({ params }: EditdPageProps) => {
    
     
     const gig = useQuery(api.gig.get, { id: params.gigid as Id<"gigs"> })
-    
+    console.log(gig);
 
     const published = useQuery(api.gig.isPublished, { id: params.gigid as Id<"gigs"> });
     const {

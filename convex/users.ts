@@ -18,13 +18,10 @@ export const store = mutation({
                 q.eq("tokenIdentifier", identity.tokenIdentifier)
             )
             .unique();
-        /*if (user !== null) {
-            // If we've seen this identity before but the name has changed, patch the value.
-            if (user.username !== identity.nickname) {
-                await ctx.db.patch(user._id, { username: identity.nickname });
-            }
+        if (user !== null) {
+            
             return user._id;
-        }*/
+        }
 
         // If it's a new identity, create a new `User`.
         const userId = await ctx.db.insert("users", {

@@ -11,7 +11,7 @@ export const getByUser = query({
         if (!identity) {
             throw new Error("Unauthorized");
         }
-
+       console.log("Fetching skills for user:", args.username);
         const user = await ctx.db
             .query("users")
             .withIndex("by_username", (q) => q.eq("username", args.username))

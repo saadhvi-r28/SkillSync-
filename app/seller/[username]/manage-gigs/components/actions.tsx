@@ -19,10 +19,11 @@ const GigActionsCell = ({ gigId, username }: GigActionsCellProps) => {
     } = useApiMutation(api.gig.remove);
 
     const handleDelete = () => {
-        console.log("Delete", gigId)
+        
         remove({ id: gigId });
     }
-
+    console.log("GigActionsCell gigId:", gigId);
+    console.log("GigActionsCell username:", username);
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>

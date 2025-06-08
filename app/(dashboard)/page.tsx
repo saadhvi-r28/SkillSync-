@@ -25,6 +25,13 @@ interface DashboardProps {
 const Dashboard = ({
     searchParams
 }: DashboardProps) => {
+    const store = useMutation(api.users.store);
+    useEffect(() => {
+        const storeUser = async () => {
+            await store({});
+        }
+        storeUser();
+    }, [store])
     return (
         <AnimatedContainer animation="fade" className="min-h-screen">
             <div className="container mx-auto px-4 py-8">
