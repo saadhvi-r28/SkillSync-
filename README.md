@@ -1,8 +1,7 @@
+![No Image](chat%20bot.png)
 # SkillSync
 
 SkillSync is an AI-powered marketplace platform that intelligently connects buyers with the most suitable freelance sellers through advanced recommendation algorithms. The platform features a modern Next.js frontend with a FastAPI backend agent that leverages machine learning to provide personalized matches based on project requirements, seller expertise, and historical performance data.
-![No Image](chat%20bot.png)
-
 
 ## Features
 
